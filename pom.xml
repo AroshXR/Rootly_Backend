@@ -238,7 +238,15 @@
                 <version>3.28.0</version>
 
                 <configuration>
+                    <rulesets>
+                        <ruleset>category/java/bestpractices.xml</ruleset>
+                        <ruleset>category/java/errorprone.xml</ruleset>
+                        <ruleset>category/java/design.xml</ruleset>
+                    </rulesets>
+
                     <failOnViolation>true</failOnViolation>
+                    <failurePriority>3</failurePriority>
+                    <maxAllowedViolations>0</maxAllowedViolations>
                     <printFailingErrors>true</printFailingErrors>
                     <verbose>true</verbose>
                 </configuration>
