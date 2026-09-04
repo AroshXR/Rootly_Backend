@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
@@ -21,7 +20,6 @@ public class UnlockCondition {
     @Field("type")
     private UnlockConditionType type;
 
-    @Indexed
     @Field("date")
     private Instant date;
 
