@@ -71,17 +71,33 @@ public class CapsuleService {
      * @return the updated capsule
      */
     public Capsule inviteContributor(String capsuleId, InviteContributorRequest request) {
-        String normalizedCapsuleId = trimToNull(capsuleId);
-        String contributorId = request == null ? null : trimToNull(request.contributorId());
-        if (normalizedCapsuleId == null) {
-            throw new IllegalArgumentException("capsuleId is required");
-        }
-        if (contributorId == null) {
-            throw new IllegalArgumentException("contributorId is required");
-        }
-
+        String normalizedCapsuleId = requireId(capsuleId, "capsuleId is required");
+        String contributorId = requireContributorId(request);
         Capsule capsule = capsuleRepository.findById(normalizedCapsuleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Capsule not found: " + normalizedCapsuleId));
+        validateContributorInvitation(capsule, contributorId);
+
+        List<String> contributorIds = cleanIds(capsule.getContributorIds());
+        contributorIds.add(contributorId);
+        capsule.setContributorIds(contributorIds);
+        capsule.setUpdatedAt(Instant.now(clock));
+        return capsuleRepository.save(capsule);
+    }
+
+    private static String requireContributorId(InviteContributorRequest request) {
+        return requireId(request == null ? null : request.contributorId(), "contributorId is required");
+    }
+
+    private static String requireId(String value, String message) {
+        String id = trimToNull(value);
+        if (id == null) {
+            throw new IllegalArgumentException(message);
+        }
+        return id;
+    }
+
+    @SuppressWarnings("PMD.LawOfDemeter") // Capsule state is intentionally validated by the application service.
+    private static void validateContributorInvitation(Capsule capsule, String contributorId) {
         if (capsule.getStatus() != CapsuleStatus.OPEN) {
             throw new IllegalStateException("Contributors can only be invited to an open capsule");
         }
@@ -89,17 +105,12 @@ public class CapsuleService {
             throw new IllegalArgumentException("The capsule creator is already a contributor");
         }
 
-        List<String> contributorIds = cleanIds(capsule.getContributorIds());
-        if (contributorIds.contains(contributorId)) {
+        if (cleanIds(capsule.getContributorIds()).contains(contributorId)) {
             throw new IllegalStateException("User is already a contributor to this capsule");
         }
-
-        contributorIds.add(contributorId);
-        capsule.setContributorIds(contributorIds);
-        capsule.setUpdatedAt(Instant.now(clock));
-        return capsuleRepository.save(capsule);
     }
 
+    @SuppressWarnings("PMD.LawOfDemeter") // UnlockCondition is a request value object, so its fields must be inspected here.
     private void validateUnlockCondition(UnlockCondition condition) {
         if (condition.getType() == null) {
             throw new IllegalArgumentException("unlockCondition.type is required");
