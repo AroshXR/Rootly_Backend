@@ -1,11 +1,13 @@
 package com.backend.rootly.service;
 
 import com.backend.rootly.dto.CreateCapsuleRequest;
+import com.backend.rootly.dto.InviteContributorRequest;
 import com.backend.rootly.entity.Capsule;
 import com.backend.rootly.entity.UnlockCondition;
 import com.backend.rootly.enums.CapsuleStatus;
 import com.backend.rootly.enums.CapsulePrivacy;
 import com.backend.rootly.enums.UnlockConditionType;
+import com.backend.rootly.exception.ResourceNotFoundException;
 import com.backend.rootly.repository.CapsuleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,44 @@ public class CapsuleService {
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
+        return capsuleRepository.save(capsule);
+    }
+
+    /**
+     * Adds an invited contributor to an open capsule. A contributor is stored only once,
+     * which prevents an invite retry from creating duplicate entries.
+     *
+     * @param capsuleId the capsule receiving the invitation
+     * @param request the contributor to invite
+     * @return the updated capsule
+     */
+    public Capsule inviteContributor(String capsuleId, InviteContributorRequest request) {
+        String normalizedCapsuleId = trimToNull(capsuleId);
+        String contributorId = request == null ? null : trimToNull(request.contributorId());
+        if (normalizedCapsuleId == null) {
+            throw new IllegalArgumentException("capsuleId is required");
+        }
+        if (contributorId == null) {
+            throw new IllegalArgumentException("contributorId is required");
+        }
+
+        Capsule capsule = capsuleRepository.findById(normalizedCapsuleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Capsule not found: " + normalizedCapsuleId));
+        if (capsule.getStatus() != CapsuleStatus.OPEN) {
+            throw new IllegalStateException("Contributors can only be invited to an open capsule");
+        }
+        if (contributorId.equals(capsule.getCreatorId())) {
+            throw new IllegalArgumentException("The capsule creator is already a contributor");
+        }
+
+        List<String> contributorIds = cleanIds(capsule.getContributorIds());
+        if (contributorIds.contains(contributorId)) {
+            throw new IllegalStateException("User is already a contributor to this capsule");
+        }
+
+        contributorIds.add(contributorId);
+        capsule.setContributorIds(contributorIds);
+        capsule.setUpdatedAt(Instant.now(clock));
         return capsuleRepository.save(capsule);
     }
 
