@@ -36,7 +36,9 @@ public class CapsuleService {
     }
 
     public Capsule createCapsule(CreateCapsuleRequest request) {
-        validateUnlockCondition(request.unlockCondition());
+        if (request.unlockCondition() != null) {
+            request.unlockCondition().validate(clock);
+        }
 
         List<String> sharedUserIds = cleanIds(request.sharedWithUserIds());
         if (request.privacy() == CapsulePrivacy.SHARED && sharedUserIds.isEmpty()) {
@@ -75,9 +77,10 @@ public class CapsuleService {
         String contributorId = requireContributorId(request);
         Capsule capsule = capsuleRepository.findById(normalizedCapsuleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Capsule not found: " + normalizedCapsuleId));
-        validateContributorInvitation(capsule, contributorId);
 
         List<String> contributorIds = cleanIds(capsule.getContributorIds());
+        capsule.validateForInvitation(contributorId, contributorIds);
+
         contributorIds.add(contributorId);
         capsule.setContributorIds(contributorIds);
         capsule.setUpdatedAt(Instant.now(clock));
@@ -94,42 +97,6 @@ public class CapsuleService {
             throw new IllegalArgumentException(message);
         }
         return id;
-    }
-
-    @SuppressWarnings("PMD.LawOfDemeter") // Capsule state is intentionally validated by the application service.
-    private static void validateContributorInvitation(Capsule capsule, String contributorId) {
-        if (capsule.getStatus() != CapsuleStatus.OPEN) {
-            throw new IllegalStateException("Contributors can only be invited to an open capsule");
-        }
-        if (contributorId.equals(capsule.getCreatorId())) {
-            throw new IllegalArgumentException("The capsule creator is already a contributor");
-        }
-
-        if (cleanIds(capsule.getContributorIds()).contains(contributorId)) {
-            throw new IllegalStateException("User is already a contributor to this capsule");
-        }
-    }
-
-    @SuppressWarnings("PMD.LawOfDemeter") // UnlockCondition is a request value object, so its fields must be inspected here.
-    private void validateUnlockCondition(UnlockCondition condition) {
-        if (condition.getType() == null) {
-            throw new IllegalArgumentException("unlockCondition.type is required");
-        }
-        if (condition.getType() == UnlockConditionType.DATE) {
-            if (condition.getDate() == null || !condition.getDate().isAfter(Instant.now(clock))) {
-                throw new IllegalArgumentException("unlockCondition.date must be a future date");
-            }
-        } else if (condition.getType() == UnlockConditionType.LOCATION) {
-            requireText(condition.getLocation(), "unlockCondition.location is required for a location unlock");
-        } else if (condition.getType() == UnlockConditionType.OCCASION) {
-            requireText(condition.getOccasionName(), "unlockCondition.occasionName is required for an occasion unlock");
-        }
-    }
-
-    private static void requireText(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
-        }
     }
 
     private static List<String> cleanIds(List<String> ids) {
