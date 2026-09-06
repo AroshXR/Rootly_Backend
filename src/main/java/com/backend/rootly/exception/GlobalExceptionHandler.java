@@ -12,11 +12,13 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String MESSAGE_KEY = "message";
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, String>> handleEmailAlreadyExists(EmailAlreadyExistsException exception) {
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", exception.getMessage());
+        response.put(MESSAGE_KEY, exception.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
@@ -25,7 +27,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(InvalidCredentialsException exception) {
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", exception.getMessage());
+        response.put(MESSAGE_KEY, exception.getMessage());
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
@@ -34,9 +36,36 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleUserNotFound(UserNotFoundException exception) {
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", exception.getMessage());
+        response.put(MESSAGE_KEY, exception.getMessage());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleResourceNotFound(ResourceNotFoundException exception) {
+
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE_KEY, exception.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception) {
+
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE_KEY, exception.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException exception) {
+
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE_KEY, exception.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

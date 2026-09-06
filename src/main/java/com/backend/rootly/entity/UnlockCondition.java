@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.time.Clock;
 import java.time.Instant;
 
 @Getter
@@ -28,4 +29,25 @@ public class UnlockCondition {
 
     @Field("occasionName")
     private String occasionName;
+
+    public void validate(Clock clock) {
+        if (this.type == null) {
+            throw new IllegalArgumentException("unlockCondition.type is required");
+        }
+        if (this.type == UnlockConditionType.DATE) {
+            if (this.date == null || !this.date.isAfter(Instant.now(clock))) {
+                throw new IllegalArgumentException("unlockCondition.date must be a future date");
+            }
+        } else if (this.type == UnlockConditionType.LOCATION) {
+            requireText(this.location, "unlockCondition.location is required for a location unlock");
+        } else if (this.type == UnlockConditionType.OCCASION) {
+            requireText(this.occasionName, "unlockCondition.occasionName is required for an occasion unlock");
+        }
+    }
+
+    private static void requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+    }
 }

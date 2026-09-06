@@ -81,4 +81,16 @@ public class Capsule {
     @LastModifiedDate
     @Field("updatedAt")
     private Instant updatedAt;
+
+    public void validateForInvitation(String contributorId, List<String> cleanedContributorIds) {
+        if (this.status != CapsuleStatus.OPEN) {
+            throw new IllegalStateException("Contributors can only be invited to an open capsule");
+        }
+        if (contributorId.equals(this.creatorId)) {
+            throw new IllegalArgumentException("The capsule creator is already a contributor");
+        }
+        if (cleanedContributorIds.contains(contributorId)) {
+            throw new IllegalStateException("User is already a contributor to this capsule");
+        }
+    }
 }
