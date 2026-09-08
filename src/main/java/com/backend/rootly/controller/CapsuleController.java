@@ -1,0 +1,44 @@
+package com.backend.rootly.controller;
+
+import com.backend.rootly.dto.CreateCapsuleRequest;
+import com.backend.rootly.dto.InviteContributorRequest;
+import com.backend.rootly.entity.Capsule;
+import com.backend.rootly.service.CapsuleService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
+
+@RestController
+@CrossOrigin
+@RequestMapping("/api/capsules")
+@RequiredArgsConstructor
+public class CapsuleController {
+
+    private final CapsuleService capsuleService;
+
+    @PostMapping
+    public ResponseEntity<Capsule> createCapsule(@Valid @RequestBody CreateCapsuleRequest request) {
+        Capsule capsule = capsuleService.createCapsule(request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(capsule.getId())
+                .toUri();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.LOCATION, location.toString())
+                .body(capsule);
+    }
+
+    @PostMapping({"/{capsuleId}/contributors", "/{capsuleId}/invite"})
+    public ResponseEntity<Capsule> inviteContributor(
+            @PathVariable String capsuleId,
+            @Valid @RequestBody InviteContributorRequest request) {
+        return ResponseEntity.ok(capsuleService.inviteContributor(capsuleId, request));
+    }
+    //complete the rest of the controller methods for updating, deleting, and retrieving capsules as needed
+}
