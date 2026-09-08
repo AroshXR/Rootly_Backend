@@ -40,4 +40,5 @@ public class CapsuleController {
             @Valid @RequestBody InviteContributorRequest request) {
         return ResponseEntity.ok(capsuleService.inviteContributor(capsuleId, request));
     }
+    //complete the rest of the controller methods for updating, deleting, and retrieving capsules as needed
 }
