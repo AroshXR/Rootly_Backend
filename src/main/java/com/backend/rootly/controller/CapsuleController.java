@@ -1,44 +1,62 @@
 package com.backend.rootly.controller;
 
-import com.backend.rootly.dto.CreateCapsuleRequest;
-import com.backend.rootly.dto.InviteContributorRequest;
-import com.backend.rootly.entity.Capsule;
+import com.backend.rootly.domain.CreateCapsuleDomain;
+import com.backend.rootly.domain.InviteContributorDomain;
+import com.backend.rootly.dto.request.CreateCapsuleRequestDTO;
+import com.backend.rootly.dto.request.InviteContributorRequestDTO;
 import com.backend.rootly.service.CapsuleService;
-import jakarta.validation.Valid;
+import com.backend.rootly.utility.EndPoint;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import lombok.extern.log4j.Log4j2;
+import org.modelmapper.ModelMapper;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
+import java.util.Locale;
 
 @RestController
+@RequestMapping(EndPoint.API)
 @CrossOrigin
-@RequestMapping("/api/capsules")
 @RequiredArgsConstructor
+@Log4j2
 public class CapsuleController {
 
     private final CapsuleService capsuleService;
+    private final ModelMapper modelMapper;
 
-    @PostMapping
-    public ResponseEntity<Capsule> createCapsule(@Valid @RequestBody CreateCapsuleRequest request) {
-        Capsule capsule = capsuleService.createCapsule(request);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(capsule.getId())
-                .toUri();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.LOCATION, location.toString())
-                .body(capsule);
+    @PostMapping(value = {EndPoint.CAPSULES, "/capsules"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> createCapsule(
+            @Validated @RequestBody CreateCapsuleRequestDTO requestDTO,
+            @RequestHeader(value = "Accept-Language", required = false) Locale locale) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received Create Capsule request");
+        }
+        CreateCapsuleDomain domain = modelMapper.map(requestDTO, CreateCapsuleDomain.class);
+        return capsuleService.createCapsule(domain, locale);
     }
 
-    @PostMapping({"/{capsuleId}/contributors", "/{capsuleId}/invite"})
-    public ResponseEntity<Capsule> inviteContributor(
+    @PostMapping(value = {
+            EndPoint.CAPSULE_CONTRIBUTORS,
+            EndPoint.CAPSULE_INVITE,
+            "/capsules/{capsuleId}/contributors",
+            "/capsules/{capsuleId}/invite"
+    }, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> inviteContributor(
             @PathVariable String capsuleId,
-            @Valid @RequestBody InviteContributorRequest request) {
-        return ResponseEntity.ok(capsuleService.inviteContributor(capsuleId, request));
+            @Validated @RequestBody InviteContributorRequestDTO requestDTO,
+            @RequestHeader(value = "Accept-Language", required = false) Locale locale) {
+        if (log.isDebugEnabled()) {
+            log.debug("Received Invite Contributor request for capsule {}", capsuleId);
+        }
+        InviteContributorDomain domain = modelMapper.map(requestDTO, InviteContributorDomain.class);
+        return capsuleService.inviteContributor(capsuleId, domain, locale);
     }
-    //complete the rest of the controller methods for updating, deleting, and retrieving capsules as needed
 }

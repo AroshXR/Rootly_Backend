@@ -1,13 +1,15 @@
-package com.backend.rootly.service.security;
+package com.backend.rootly.filter;
 
 import com.backend.rootly.entity.UserReg;
 import com.backend.rootly.repository.UserRepository;
+import com.backend.rootly.service.security.JwtService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,6 +22,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Log4j2
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -46,31 +49,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                UserReg user = userRepository.findByEmail(email)
-                        .orElse(null);
+                UserReg user = userRepository.findByEmail(email).orElse(null);
 
-                if (user != null
-                        && jwtService.isTokenValid(token, user.getEmail())) {
+                if (user != null && jwtService.isTokenValid(token, user.getEmail())) {
 
                     SimpleGrantedAuthority authority =
-                            new SimpleGrantedAuthority(
-                                    "ROLE_" + user.getRole()
-                            );
+                            new SimpleGrantedAuthority("ROLE_" + user.getRole());
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
-                                    user.getEmail(),
+                                    user,
                                     null,
                                     List.of(authority)
                             );
 
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
-
-        } catch (JwtException | IllegalArgumentException exception) {
-            SecurityContextHolder.clearContext();
+        } catch (JwtException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("Invalid JWT token: {}", e.getMessage());
+            }
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         filterChain.doFilter(request, response);
