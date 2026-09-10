@@ -1,17 +1,11 @@
 package com.backend.rootly.service;
 
-import com.backend.rootly.entity.UserReg;
-import com.backend.rootly.repository.UserRepository;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//@Service
-//@RequiredArgsConstructor
-//@Transactional
-public class UserService {
+import org.springframework.http.ResponseEntity;
 
-//    private final UserRepository userRepository;
+import java.util.Locale;
 
+@FunctionalInterface
+public interface UserService {
 
+    ResponseEntity<Object> getUserById(String userId, Locale locale);
 }

@@ -50,10 +50,12 @@ public class ExploreConfiguration {
     }
 
     @Bean
+    @org.springframework.core.annotation.Order(1)
     // Spring's HttpSecurity builder declares checked Exception in its API.
     @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     public SecurityFilterChain exploreSecurity(HttpSecurity http) throws Exception {
-        http.cors(Customizer.withDefaults())
+        http.securityMatcher(EndPoint.API + EndPoint.EXPLORE_PATH_PATTERN)
+                .cors(Customizer.withDefaults())
                 // The public places POST performs a read-only search without session credentials.
                 .csrf(csrf -> csrf.ignoringRequestMatchers(EndPoint.API + EndPoint.EXPLORE_PLACES))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

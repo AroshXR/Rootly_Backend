@@ -28,7 +28,7 @@ public class ExplorePlacesController {
     @PostMapping(value = EndPoint.EXPLORE_PLACES, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> places(@Validated @RequestBody ExplorePlacesRequestDTO requestDTO) {
         if (log.isDebugEnabled()) {
-            log.debug("Received Explore Places request {}", requestDTO);
+            log.debug("Received Explore Places request");
         }
         return explorePlacesService.search(modelMapper.map(requestDTO, ExplorePlacesRequest.class));
     }

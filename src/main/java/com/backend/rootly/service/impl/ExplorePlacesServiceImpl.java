@@ -44,16 +44,23 @@ public class ExplorePlacesServiceImpl implements ExplorePlacesService {
         int page = request.getPage();
         int size = request.getSize();
         validate(query, page, size);
+
         ExploreCategory category = categoryId.isBlank() || "all".equalsIgnoreCase(categoryId.trim())
                 ? null : ExploreCategory.fromId(categoryId);
+
         List<String> words = Arrays.stream(normalize(query).split("\\s+"))
                 .filter(word -> !word.isEmpty()).toList();
+
         ExploreCatalog catalog = catalog();
+
         List<ExplorePlaceDTO> matches = catalog.getPlaces().stream()
                 .filter(place -> category == null || category.getId().equals(place.getCategoryId()))
                 .filter(place -> matches(place, words)).toList();
+
         long start = (long) page * size;
+
         List<ExplorePlaceDTO> items = matches.stream().skip(start).limit(size).toList();
+
         return ResponseEntity.ok(new ExplorePlacesResponseDTO(items, page, size, matches.size(), start + items.size() < matches.size(),
                 "Wikidata", catalog.getFetchedAt(), !isFresh(catalog), catalog.isTruncated()));
     }

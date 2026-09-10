@@ -20,6 +20,7 @@ src/main/java/com/backend/rootly/
   dto/response/     Response DTOs
   enums/            Supported categories
   exception/        Application exceptions
+  filter/           Request tracing, request logging and JWT authentication
   mapper/           Provider-to-DTO mapping
   service/          Service interfaces
   service/impl/     Business logic and cache implementations
@@ -118,6 +119,18 @@ with no usable cached catalog returns HTTP 503 and `Retry-After`.
 | `EXPLORE_CACHE_TTL` | `15m` |
 | `EXPLORE_MAX_STALE` | `24h` |
 | `ROOTLY_ALLOWED_ORIGINS` | `http://localhost:*,http://127.0.0.1:*` |
+| `ROOTLY_LOG_PATH` | `logs` |
+| `ROOTLY_LOG_LEVEL` | `debug` |
+| `ROOT_LOG_LEVEL` | `info` |
+| `REQUEST_LOG_MAX_PAYLOAD` | `8192` bytes |
+
+
+Each HTTP response includes `X-Request-Id`. Request logs include that ID, the
+`X-B3-TraceId` value when supplied, method, URI, response status and duration.
+JSON, text and form bodies are logged at DEBUG up to the configured payload
+limit. Authorization, cookies, API keys, passwords, tokens, secrets and OTPs are
+redacted. Actuator requests are excluded. Log4j2 writes separate rolling DEBUG,
+INFO, WARN and ERROR files under `ROOTLY_LOG_PATH`; files rotate daily or at 10 MB.
 
 Set a descriptive User-Agent with a real project URL or maintainer contact before
 deployment. For Flutter web, set `ROOTLY_ALLOWED_ORIGINS` to your site's origin;
@@ -140,8 +153,8 @@ Duplicate images/categories are merged by Wikidata ID, with specific categories
 preferred over the generic heritage category. Coverage follows public source
 data and is not guaranteed complete.
 
-Existing database starter dependencies are retained, but unused JDBC/MongoDB
-auto-configuration is disabled until a persistence feature is configured.
+MongoDB auto-configuration is enabled for the user and capsule repositories. Unused
+JDBC auto-configuration remains disabled.
 
 ## Flutter connection
 

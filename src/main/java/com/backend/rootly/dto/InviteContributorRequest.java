@@ -7,5 +7,7 @@ import jakarta.validation.constraints.Size;
 public record InviteContributorRequest(
         @NotBlank(message = "contributorId is required")
         @Size(max = 100, message = "contributorId must not exceed 100 characters")
-        String contributorId) {
+        String contributorId
+) {
 }
+
